@@ -96,13 +96,20 @@ for(k in 1:K){
   moderror[[k]]<-class_err[[which.min(class_err)]]
   bestmodel[[k]]<-which.min(class_err)}
 
+moderror
+bestmodel
+#took a while to run!
 
-#best ntrees is 300 across all folds
+#best ntrees is entry 1, 300
 #test on our test data
-fish_rf=randomForest(LSH7class~.,data=fish[training.set,] ,mtry=2, ntree=300, importance =TRUE)
-yhat.bag<-predict(fish_rf , newdata=fish[-training.set,])
-1-mean(yhat.bag==LSH7class.test)
-#2.41% class err
-importance(fish_rf)
-varImpPlot(fish_rf)
-#secchi lake mean, area hectacres, mean gdd, max depth most important
+d_rf=randomForest(class~.,data=d[train,] ,mtry=4, ntree=300, importance =TRUE)
+yhat.bag<-predict(d_rf , newdata=d[-train,])
+1-mean(yhat.bag==class_test)
+#5.26% class err
+importance(d_rf)
+varImpPlot(d_rf)
+#For gini
+#v1, v5, v2, v3, v4, and v9
+
+#for acc
+#v1, v9, v2, v3, v4
