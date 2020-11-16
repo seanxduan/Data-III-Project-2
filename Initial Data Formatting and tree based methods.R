@@ -14,6 +14,7 @@ ydat<-read.table("Ytrain.txt")
 ydat<-rename(ydat, class = V1)
 ydat$class<-as.factor(ydat$class)
 d<-cbind(xdat,ydat)
+xtest<-read.table("Xtest.txt")
 
 #check to see if any NA's
 apply(d, 2, function(x) any(is.na(x)))
@@ -102,8 +103,10 @@ bestmodel
 
 #best ntrees is entry 1, 300
 #test on our test data
-d_rf=randomForest(class~.,data=d[train,] ,mtry=4, ntree=300, importance =TRUE)
+d_rf=randomForest(class~.,data=d[train,] ,mtry=4, ntree=300, importance =TRUE, probability = T)
 yhat.bag<-predict(d_rf , newdata=d[-train,])
+
+
 1-mean(yhat.bag==class_test)
 #5.26% class err
 importance(d_rf)
@@ -113,3 +116,35 @@ varImpPlot(d_rf)
 
 #for acc
 #v1, v9, v2, v3, v4
+
+## lets try the onehot encoding 
+yhat.bag2<-predict(d_rf , newdata=d[-train,], probability = T)
+attr(yhat.bag2, "probabilities")
+
+#try this again, from xtackxchange
+tmp <- predict(d_rf, xtest, "prob")
+class(tmp)
+tmz<-as.matrix(tmp)
+class(tmz)
+tmz
+
+##impute some values(can't have pure 0's in our matrice)
+tmz2<-tmz+.00000001
+tmz2
+
+#test using code from wikle
+install.packages("MCMCpack")
+library(MCMCpack)
+#addtl setup code
+library(mltools)
+library(data.table)
+Yhot <- one_hot(as.data.table(as.factor(d$class)))
+Yhot
+length(tmz)
+length(Yhot)
+
+set.seed(1)
+#ppred here is same as our tmp matrice
+CE = -sum(colSums(Yhot*log(tmz2)))
+CE
+
