@@ -35,7 +35,7 @@ plot(knn)
 # Report the confusion matrix and accuracy (0.7316)
 confusionMatrix(knn)
 
-# Calculate the cross-entropy (3757.638)
+# Calculate the training cross-entropy (3757.638)
 knn_pred <- predict(knn, newdata = train, type = "prob")
 knn_pred <- as.matrix(knn_pred)
 knn_ce <- -sum(colSums(y_hot*log(knn_pred + 1e-15)))
