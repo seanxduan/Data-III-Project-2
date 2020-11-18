@@ -68,10 +68,13 @@ tmTree<-tm+.000000001
 tmTree
 Yhot <- one_hot(as.data.table(as.factor(d$class)))
 Yhot
+<<<<<<< HEAD
 
 tm2 <- predict(d_bag, xtest, "prob")
 tmTree2<-tm+.000000001
 tmTree2
+=======
+>>>>>>> main
 ```
 
 We looked at several different types of tree based methods. Initially, we considered a plain CART, bagging, boosting, and random forest. For each of these methods, we proceeded to do hold-out testing on a subset of our training data, using classification error rate as our criteria. After tuning all of our tree based methods using this criteria, we then selected the best tree based method, which here, is bagging.
