@@ -1,0 +1,93 @@
+---
+title: "Project 2 Final Version"
+author: "Sean Duan, David Reynolds, Joe Connelly"
+date: "11/9/2020"
+output: pdf_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tree)
+library(ISLR)
+library(randomForest)
+library(gbm)
+library(MCMCpack)
+library(mltools)
+library(data.table)
+set.seed(1)
+
+#first read in the data
+xdat<-read.table("Data/Xtrain.txt")
+ydat<-read.table("Data/Ytrain.txt")
+ydat<-rename(ydat, class = V1)
+ydat$class<-as.factor(ydat$class)
+d<-cbind(xdat,ydat)
+xtest<-read.table("Data/Xtest.txt")
+
+#check to see if any NA's
+apply(d, 2, function(x) any(is.na(x)))
+#doesn't look like we have to do any more data cleaning?
+
+#prep data for split into test/train
+set.seed(1)
+train=sample(1:nrow(d),5000)
+d_test=d[-train,]
+class_test=d_test[,11]
+```
+
+## Introduction
+
+looking at our problem, we have 10 columns of numerical data. No domain knowledge has been provided on what the columns represent. We also have a outcome variable that is categorical, with 9 different categories. Again, no domain knowledge has been provided as to what the values mean. Given that we have very little information about our data, and that our number of predictors is significantly lower than our observations n, we decided that a tree based method, a SVM, a KNN, and a neural net were a good range of models to consider
+
+Regarding the data itself, since there was no missing values, no data imputation was necessary before statistical analysis began. Additionally, the only processing we did was to split our training data into a test and training dataset, additionally, we also ensured that our outcome column was correctly assigned as a factor, instead of a continous numerical vector.
+
+## Tree Based Methods 
+```{r tree}
+#bagging
+d_bag=randomForest(class~.,data=d , subset=train,mtry=10,importance =TRUE)
+d_bag
+#error rate 5.64%
+#checking test MSE
+yhat.bag = predict (d_bag , newdata=d[-train,])
+plot(yhat.bag , class_test)
+#importance of variables
+importance(d_bag)
+varImpPlot(d_bag)
+#since gini is interpretationable, 
+#we see gini best is v5, v1, v2, and v3
+
+#acc decrease is what we're looking for b/c score improvement
+#we see acc best is v1, v9, v2 and v5
+table(yhat.bag,class_test)
+1-mean(yhat.bag==class_test)
+#6.02% class error!
+
+tm <- predict(d_bag, d, "prob")
+tmTree<-tm+.000000001
+tmTree
+Yhot <- one_hot(as.data.table(as.factor(d$class)))
+Yhot
+```
+
+We looked at several different types of tree based methods. Initially, we considered a plain CART, bagging, boosting, and random forest. For each of these methods, we proceeded to do hold-out testing on a subset of our training data, using classification error rate as our criteria. After tuning all of our tree based methods using this criteria, we then selected the best tree based method, which here, is bagging.
+
+Looking at the graphs of accuracy and node purity that we produced from the bagging method, we found that v5, v1, and v2 seemed like they were roughly the most important variables for both accuracy and node purity.
+
+Looking at our table and graph of the outcomes, it is fairly clear that we had excellent classification ability, with a classification error of approximately 6 percent.
+
+## Support Vector Machines 
+```{r svm}
+
+```
+
+
+## KNN
+```{r KNN}
+```
+
+
+## Neural Net
+```{r nnets}
+```
+
