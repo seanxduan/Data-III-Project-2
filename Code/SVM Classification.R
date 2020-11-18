@@ -32,11 +32,11 @@ tune.out2 = tune(svm, Author ~., data = training, kernel = "radial",
                  ranges = list(cost = c(.01, 1, 10, 100),
                                gamma = c(.01, 1, 10, 100)))
 tune.out3 = tune(svm, Author ~., data = training, kernel = "polynomial",
-                 ranges = list(cost = c(10, 100),
-                               degree = c(2, 3)))
+                 ranges = list(cost = c(.01, 1, 10, 100),
+                               degree = c(2, 3, 4)))
 tune.out4 = tune(svm, Author ~., data = training, kernel = "sigmoid", 
-                 ranges = list(cost = c(10, 100),
-                               gamma = c(1, 10)))
+                 ranges = list(cost = c(0.1, 1, 10, 100),
+                               gamma = c(0.1, 1, 10, 100)))
 
 
 
@@ -56,14 +56,23 @@ ypred2 = predict(best.mod2, Xtrain, probability = T)
 probstrain2 = attr(ypred2, "probabilities")
 CEtrain2 = -sum(colSums(Yhot*log(probstrain2)))
 
-ypred2 = predict(best.mod2, Xtest, probability = T)
-probs2 = attr(ypred2, "probabilities")
-
 summary(tune.out3)
-
-
-
-
+best.mod3 = svm(Author ~ ., data = training, kernel = "polynomial",
+                cost = 100, degree = 3, probability = T)
+ypred3 = predict(best.mod3, Xtrain, probability = T)
+probstrain3 = attr(ypred3, "probabilities")
+CEtrain3 = -sum(colSums(Yhot*log(probstrain3)))
 
 
 summary(tune.out4)
+best.mod4 = svm(Author ~., data = training, kernel = "sigmoid",
+                cost = 0.1, gamma = 0.1, probability = T)
+ypred4 = predict(best.mod4, Xtrain, probability = T)
+probstrain4 = attr(ypred4, "probabilities")
+CEtrain4 = -sum(colSums(Yhot*log(probstrain4)))
+
+random = svm(Author ~., data = training, kernel = "sigmoid",
+             cost = 100, gamma = 100, probability = T)
+randompred = predict(random, Xtrain, probability = T)
+randomprob = attr(randompred, "probabilities")
+CErandom = -sum(colSums(Yhot*log(randomprob)))
