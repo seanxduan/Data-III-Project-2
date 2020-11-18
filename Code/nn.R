@@ -31,13 +31,31 @@ x_test_scaled <- t(apply(x_test, 1, rescale, x_min, x_max))
 # Train the neural network
 set.seed(1)
 nn <- neuralnetwork(X = x_train_scaled, y = y_train, hidden.layers = c(5, 3, 3), optim.type = "adam",
-                    n.epochs = 10, activ.functions = "relu", learn.rates = 0.0005, val.prop = 0.05)
+                    n.epochs = 10, activ.functions = "relu", learn.rates = 0.05, val.prop = 0.05)
 
-# Report the confusion matrix and accuracy (0.1827)
+# Report the confusion matrix and accuracy (0.3369)
 nn_pred <- predict(nn, newdata = x_train_scaled)
 nn_table <- table(truth = y_train$author, fitted = nn_pred$predictions)
 sum(diag(nn_table))/length(y_train$author)
 
-# Calculate the cross-entropy (24935.02)
-nn_probs <- as.matrix(nn_pred$probabilities)
+# Calculate the training cross-entropy (13526.19)
+nn_pred <- predict(nn, newdata = x_train_scaled, probability = TRUE)
+nn_probs <- as.data.frame(nn_pred$probabilities)
+
+nn_probs <- nn_probs %>% 
+  select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
+         "9" = class_9, "11" = class_11, "12" = class_12)
+
+nn_probs <- as.matrix(nn_probs)
 nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
+
+# Save the test prediction probabilities
+Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
+Ppred5 <- as.data.frame(Ppred5$probabilities)
+
+Ppred5 <- Ppred5 %>% 
+  select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
+         "9" = class_9, "11" = class_11, "12" = class_12)
+
+Ppred5 <- as.matrix(Ppred5)
+save(Ppred5, file = "Ppred5.RData")

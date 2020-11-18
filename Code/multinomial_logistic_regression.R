@@ -24,12 +24,17 @@ train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10)
 
 # Fit the model
 set.seed(1)
-multinom <- train(author ~., data = train, method = "multinom", trControl = train_control, trace = FALSE)
+multinom <- caret::train(author ~., data = train, method = "multinom", trControl = train_control, trace = FALSE)
 
-# Report the confusion matrix and accuracy (0.5394)
+# Report the confusion matrix and accuracy (0.5393)
 confusionMatrix(multinom)
 
-# Calculate the cross-entropy (39484.66)
-multinom_pred <- predict(multinom, newdata = test, type = "prob")
+# Calculate the training cross-entropy (13576.85)
+multinom_pred <- predict(multinom, newdata = train, type = "prob")
 multinom_pred <- as.matrix(multinom_pred)
 multinom_ce <- -sum(colSums(y_hot*log(multinom_pred + 1e-15)))
+
+# Save the test prediction probabilities
+Ppred1 <- predict(multinom, newdata = test, type = "prob")
+Ppred1 <- as.matrix(Ppred1)
+save(Ppred1, file = "Ppred1.RData")
