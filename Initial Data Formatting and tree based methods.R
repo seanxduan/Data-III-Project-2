@@ -5,6 +5,9 @@ library(tree)
 library(ISLR)
 library(randomForest)
 library(gbm)
+library(MCMCpack)
+library(mltools)
+library(data.table)
 set.seed(1)
 
 
@@ -44,6 +47,17 @@ varImpPlot(d_bag)
 table(yhat.bag,class_test)
 1-mean(yhat.bag==class_test)
 #6.02% class error!
+
+tmp <- predict(d_bag, d, "prob")
+tmz2<-tmp+.00000001
+tmz2
+Yhot <- one_hot(as.data.table(as.factor(d$class)))
+Yhot
+
+set.seed(1)
+#ppred here is same as our tmp matrice
+CE = -sum(colSums(Yhot*log(tmz2)))
+CE
 
 #boosting
 #unsure how to set distrib. lets put a pin in it until we talk to wikle/other group members.
@@ -122,7 +136,10 @@ yhat.bag2<-predict(d_rf , newdata=d[-train,], probability = T)
 attr(yhat.bag2, "probabilities")
 
 #try this again, from xtackxchange
-tmp <- predict(d_rf, xtest, "prob")
+tmp2 <- predict(d_rf, xtest, "prob")
+#above is the matrix for our test data
+tmp <- predict(d_rf, d, "prob")
+
 class(tmp)
 tmz<-as.matrix(tmp)
 class(tmz)
@@ -133,15 +150,9 @@ tmz2<-tmz+.00000001
 tmz2
 
 #test using code from wikle
-install.packages("MCMCpack")
-library(MCMCpack)
-#addtl setup code
-library(mltools)
-library(data.table)
+
 Yhot <- one_hot(as.data.table(as.factor(d$class)))
 Yhot
-length(tmz)
-length(Yhot)
 
 set.seed(1)
 #ppred here is same as our tmp matrice
