@@ -3,6 +3,7 @@
 # Neural network
 
 library(ANN2)
+library(caret)
 library(data.table)
 library(dplyr)
 library(mltools)
@@ -30,15 +31,18 @@ x_test_scaled <- t(apply(x_test, 1, rescale, x_min, x_max))
 
 # Train the neural network
 set.seed(1)
-nn <- neuralnetwork(X = x_train_scaled, y = y_train, hidden.layers = c(5, 3, 3), optim.type = "adam",
-                    n.epochs = 10, activ.functions = "relu", learn.rates = 0.05, val.prop = 0.05)
+nn <- neuralnetwork(X = x_train_scaled, y = y_train, hidden.layers = c(9, 8, 7), optim.type = "adam",
+                    n.epochs = 10, activ.functions = "tanh", learn.rates = 0.01, val.prop = 0.05)
 
-# Report the confusion matrix and accuracy (0.3369)
+# Plot the loss during training
+plot(nn)
+
+# Report the confusion matrix and accuracy (0.2003)
 nn_pred <- predict(nn, newdata = x_train_scaled)
 nn_table <- table(truth = y_train$author, fitted = nn_pred$predictions)
 sum(diag(nn_table))/length(y_train$author)
 
-# Calculate the training cross-entropy (13526.19)
+# Calculate the training cross-entropy (7164.495)
 nn_pred <- predict(nn, newdata = x_train_scaled, probability = TRUE)
 nn_probs <- as.data.frame(nn_pred$probabilities)
 
@@ -48,6 +52,7 @@ nn_probs <- nn_probs %>%
 
 nn_probs <- as.matrix(nn_probs)
 nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
+nn_ce
 
 # Save the test prediction probabilities
 Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)

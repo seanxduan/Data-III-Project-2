@@ -6,6 +6,7 @@ library(caret)
 library(data.table)
 library(dplyr)
 library(mltools)
+library(nnet)
 
 # Read in the data
 setwd("~/Downloads/Documents/GitHub/Data-III-Project-2/Data")
@@ -17,7 +18,7 @@ train <- cbind(x, y)
 test <- read.table("Xtest.txt")
 y_hot <- one_hot(as.data.table(train$author))
 
-## Multinomial logistic regression
+## "Multinomial logistic regression" (actually a neural network)
 
 # Implement 5-fold repeated cross-validation
 train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10)
@@ -38,3 +39,17 @@ multinom_ce <- -sum(colSums(y_hot*log(multinom_pred + 1e-15)))
 Ppred1 <- predict(multinom, newdata = test, type = "prob")
 Ppred1 <- as.matrix(Ppred1)
 save(Ppred1, file = "Ppred1.RData")
+
+## Actual multinomial logistic regression
+
+# Fit the model
+multinom <- multinom(author ~., data = train)
+
+# Report the confusion matrix and accuracy (0.541)
+multinom_pred <- predict(multinom, newdata = train)
+multinom_table <- table(truth = train$author, fitted = multinom_pred)
+sum(diag(multinom_table))/length(train$author)
+
+# Calculate the training cross-entropy (13576.85)
+multinom_pred <- predict(multinom, newdata = train, type = "prob")
+multinom_ce <- -sum(colSums(y_hot*log(multinom_pred + 1e-15)))
