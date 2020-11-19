@@ -52,7 +52,6 @@ nn_probs <- nn_probs %>%
 
 nn_probs <- as.matrix(nn_probs)
 nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
-nn_ce
 
 # Save the test prediction probabilities
 Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
