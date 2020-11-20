@@ -66,12 +66,12 @@ nn <- neuralnetwork(X = x_train_scaled, y = y_train, hidden.layers = c(9, 8, 7),
 # Plot the loss during training
 plot(nn)
 
-# Report the confusion matrix and accuracy (0.2272)
+# Report the confusion matrix and accuracy (0.2225)
 nn_pred <- predict(nn, newdata = x_train_scaled)
 nn_table <- table(truth = y_train$author, fitted = nn_pred$predictions)
 sum(diag(nn_table))/length(y_train$author)
 
-# Calculate the training cross-entropy (10049.33)
+# Calculate the training cross-entropy (10178.05)
 nn_pred <- predict(nn, newdata = x_train_scaled, probability = TRUE)
 nn_probs <- as.data.frame(nn_pred$probabilities)
 
@@ -84,12 +84,12 @@ y_hot = one_hot(as.data.table(y_train$author))
 nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
 
 # Save the test prediction probabilities
-Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
-Ppred5 <- as.data.frame(Ppred5$probabilities)
+Ppred4 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
+Ppred4 <- as.data.frame(Ppred5$probabilities)
 
-Ppred5 <- Ppred5 %>% 
+Ppred4 <- Ppred4 %>% 
   select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
          "9" = class_9, "11" = class_11, "12" = class_12)
 
-Ppred5 <- as.matrix(Ppred5)
-save(Ppred5, file = "Ppred5.RData")
+Ppred4 <- as.matrix(Ppred4)
+save(Ppred4, file = "Ppred4.RData")

@@ -4,19 +4,46 @@ author: "Joe Connelly, Sean Duan & David Reynolds"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 always_allow_html: yes
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 ```
 
 ## Introduction
 
-The dataset analyzed in this report is a subset of data taken from a dataset that includes information about books, with each row representing a different book. The features, which are unnamed, are several objective measures of a text, and the goal of this analysis is to identify the correct author of each book. There are nine different authors (i.e., response levels) and 10 features. 
+The dataset analyzed in this report is a subset of data taken from a dataset that includes information about books, with each row representing a different book. The features, which are unnamed, are several objective numeric measures of a text, and the goal of this analysis is to identify the correct author of each book. There are nine different authors (i.e., response levels) and 10 features. The training set contains 10,000 books, and the test set contains 5,000 books. Cross-entropy was used to evaluate model performance.
 
 Given that we have very little information about the predictors and that the number of predictors is significantly lower than the number of observations, we decided that a tree-based method, an SVM, a KNN classifier, and a neural network was a good range of models to consider. Linear discriminant analysis, quadratic discriminant analysis, and multinomial logistic regression were also considered, but these methods did not perform as well, and therefore they will not be discussed.
 
-Since the data contains no missing values, no imputation was necessary. However, it was ensured that the response was correctly assigned as a factor rather than a continuous numeric variable. All other preprocessing details are explained in the model descriptions.
+Since the data contains no missing values, no imputation was necessary. However, it was ensured that the response was correctly assigned as a factor rather than a continuous numeric variable. All other preprocessing steps are explained in the model descriptions.
+
+## Basic data analysis/description/plots
+
+``` {r echo = FALSE, eval = FALSE}
+library(e1071)
+
+# Read in the data
+x_train<- read.table("Data/Xtrain.txt")
+
+# Correlation matrix
+cor(x_train)
+
+# Skewness
+e1071::skewness(x_train$V1)
+e1071::skewness(x_train$V2)
+e1071::skewness(x_train$V3)
+e1071::skewness(x_train$V4)
+e1071::skewness(x_train$V5)
+e1071::skewness(x_train$V6)
+e1071::skewness(x_train$V7)
+e1071::skewness(x_train$V8)
+e1071::skewness(x_train$V9)
+e1071::skewness(x_train$V10)
+```
+
+Variables 6 and 10 appeared to be highly correlated with one another, but we decided not to remove them, as there are only 10 predictors. Variables 1, 2, 5, and 7 are highly skewed, which may pose a challenge. The fact that there are no categorical predictors should help. Overall, we did not feel that any modifications needed to be made to the data before modeling.
 
 ## Tree-based methods 
 ```{r echo = FALSE, eval = FALSE}
@@ -148,13 +175,13 @@ ypred4 = predict(best.mod4, Xtrain, probability = T)
 probstrain4 = attr(ypred4, "probabilities")
 CEtrain4 = -sum(colSums(Yhot*log(probstrain4)))
 
-Ppred3 = predict(best.mod3, Xtest, probability = T)
-Ppred3 = attr(Ppred3, "probabilities")
+Ppred2 = predict(best.mod3, Xtest, probability = T)
+Ppred2 = attr(Ppred2, "probabilities")
 ```
 
-We initially thought of using a SVM as a classification model for this project for a couple of reasons. From what we learned in class, SVC and SVMs seem to be able to fit pretty complex data, and with us knowing really nothing about the data at all, we thought that it would be interesting to see if a more complex model would work best. Another reason we wanted to use the SVM modeling techniques was because of the usefulness in tuning the parameters. Becasue of how easy it is to tune the parameters, we were able to try and fit many different SVC and SVMs. 
+We initially thought of using an SVM as a classification model for this project for a couple of reasons. From what we learned in class, SVC and SVMs seem to be able to fit pretty complex data, and with us knowing really nothing about the data at all, we thought that it would be interesting to see if a more complex model would work best. Another reason we wanted to use the SVM modeling techniques was because of the usefulness in tuning the parameters. Because of how easy it is to tune the parameters, we were able to try and fit many different SVCs and SVMs. 
 
-Using classification error rate as the criteria, we were able to come up with the best model in predicting the training set. Unfortunately, none of the models tested had a training error rate that was lower than 17 percent. So, my next task was to use cross entropy to tune the parameters. I used the models that were tuned based on misclassification rates as approximations, and then plugged and chugged to find the best model in terms of cross entropy value. The best model was a polynomial kernel model with a cost of .0001 and degree of 3. 
+Using classification error rate as the criteria, we were able to come up with the best model in predicting the training set. Unfortunately, none of the models tested had a training error rate that was lower than 17 percent. So, our next task was to use cross entropy to tune the parameters. We used the models that were tuned based on misclassification rates as approximations and then plugged and chugged to find the best model in terms of cross-entropy. The best model was a polynomial kernel model with a cost of .0001 and degree of 3. 
 
 ## KNN
 ```{r echo = FALSE, eval = FALSE}
@@ -238,10 +265,12 @@ knn_pred <- as.matrix(knn_pred)
 knn_ce <- -sum(colSums(y_hot*log(knn_pred + 1e-15)))
 
 # Save the test prediction probabilities
-Ppred4 <- predict(knn, newdata = x_test, type = "prob")
-Ppred4 <- as.matrix(Ppred4)
-save(Ppred4, file = "Ppred4.RData")
+Ppred3 <- predict(knn, newdata = x_test, type = "prob")
+Ppred3 <- as.matrix(Ppred3)
+save(Ppred3, file = "Ppred3.RData")
 ```
+
+KNN was considered because it is very flexible and the bias/variance tradeoff can be controlled directly by varying K. The decision boundary is likely highly nonlinear since there are multiple classes in the response, so KNN is probably better to consider for this problem than LDA, QDA, or multinomial logistic regression.
 
 Before training the KNN classifier, the predictors in the training set were centered and scaled (using "preProcess" in caret). Five-fold cross-validated cross-entropy was used to determine the optimal value for K. In other words, the training data was split into five folds and the average cross-entropy was computed after the classifier was fit five times. This was performed for values of K ranging from 1 to 15. The five-fold cross-validated CE seemed to decrease with each increase in the number of neighbors, so 15 was chosen as the optimal value for K, with a cross-validated CE of 2,694.341. Larger values of K were not considered, as it was believed this could lead to a large decrease in variance at the cost of high bias and the cross-validated CE exhibited a clear negative trend. In addition, it was computationally difficult to compute the cross-validated CE for a large range of K, such as 1 to 50.
 
@@ -332,19 +361,23 @@ y_hot = one_hot(as.data.table(y_train$author))
 nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
 
 # Save the test prediction probabilities
-Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
-Ppred5 <- as.data.frame(Ppred5$probabilities)
+Ppred4 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
+Ppred4 <- as.data.frame(Ppred4$probabilities)
 
-Ppred5 <- Ppred5 %>% 
+Ppred4 <- Ppred4 %>% 
   select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
          "9" = class_9, "11" = class_11, "12" = class_12)
 
-Ppred5 <- as.matrix(Ppred5)
-save(Ppred5, file = "Ppred5.RData")
+Ppred4 <- as.matrix(Ppred4)
+save(Ppred4, file = "Ppred4.RData")
 ```
+
+A neural network was considered because it is a very flexible and widely used machine learning algorithm. It is very good at modeling nonlinear relationships, and it is likely that the decision boundary in this problem is not linear.
 
 Before training the neural network, the predictors in the training and test sets were scaled to be between 0 and 1. The parameters were tuned using five-fold cross-validated cross-entropy. In other words, the training data was split into five folds and the average cross-entropy was computed after the neural network was fit five times. This was performed for a range of parameter values.
 
 Note that it was difficult to automate the selection of parameter values in the loop (i.e., using a grid of different values), as RStudio often crashed when calculating the cross-validated cross-entropy alone. Because of this, different values for the number of epochs, learning rate, etc. were plugged into the loop and the cross-validated CEs were compared. Setting the number of hidden layers to three with nine, eight, and seven hidden variables, "optim.type" to "adam," "n.epochs" to 10, "activ.functions" to "tanh," the learning rate to 0.05, and the proportion of the training data used for tracing the loss on the validation set to 0.05 resulted in the lowest cross-validated CE, which was 1,996.641. This model had an accuracy of approximately 0.227 and a training cross-entropy of approximately 10,049.3. A plot of the loss during training is below.
 
 ![](/Users/davidreynolds/Downloads/Documents/GitHub/Data-III-Project-2/nn_plot.jpg)
+
+Ppred1.RData is the prediction matrix for bagging, Ppred2.RData is the matrix for SVM, Pred3.RData is the matrix for KNN, and Ppred4.RData is the matrix for the neural network. All four methods performed fairly well on the training set, but it is of course difficult to evaluate performance without test labels. Cross-validated cross-entropy was used to train the KNN classifier and neural network, which may be the best method available to evaluate model performance for this particular problem. In the future, it would probably be useful to find better ways to tune parameters while maintaining computational speed. It can be difficult to train some of these models, especially neural networks, with low computing power.

@@ -85,6 +85,6 @@ knn_pred <- as.matrix(knn_pred)
 knn_ce <- -sum(colSums(y_hot*log(knn_pred + 1e-15)))
 
 # Save the test prediction probabilities
-Ppred4 <- predict(knn, newdata = x_test, type = "prob")
-Ppred4 <- as.matrix(Ppred4)
-save(Ppred4, file = "Ppred4.RData")
+Ppred3 <- predict(knn, newdata = x_test, type = "prob")
+Ppred3 <- as.matrix(Ppred3)
+save(Ppred3, file = "Ppred3.RData")
