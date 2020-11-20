@@ -1,12 +1,25 @@
 ---
-title: "Project 2 Final Version"
-author: "Sean Duan, David Reynolds, Joe Connelly"
-date: "11/9/2020"
-output: pdf_document
-always_allow_html: true
+title: "Author classification using tree-based methods, SVMs, KNN, and neural networks"
+author: "Joe Connelly, Sean Duan & David Reynolds"
+output:
+  html_document:
+    df_print: paged
+always_allow_html: yes
 ---
 
 ```{r setup, include=FALSE}
+```
+
+## Introduction
+
+The dataset analyzed in this report is a subset of data taken from a dataset that includes information about books, with each row representing a different book. The features, which are unnamed, are several objective measures of a text, and the goal of this analysis is to identify the correct author of each book. There are nine different authors (i.e., response levels) and 10 features. 
+
+Given that we have very little information about the predictors and that the number of predictors is significantly lower than the number of observations, we decided that a tree-based method, an SVM, a KNN classifier, and a neural network was a good range of models to consider. Linear discriminant analysis, quadratic discriminant analysis, and multinomial logistic regression were also considered, but these methods did not perform as well, and therefore they will not be discussed.
+
+Since the data contains no missing values, no imputation was necessary. However, it was ensured that the response was correctly assigned as a factor rather than a continuous numeric variable. All other preprocessing details are explained in the model descriptions.
+
+## Tree-based methods 
+```{r echo = FALSE, eval = FALSE}
 library(tidyverse)
 library(tree)
 library(ISLR)
@@ -34,16 +47,7 @@ set.seed(1)
 train=sample(1:nrow(d),5000)
 d_test=d[-train,]
 class_test=d_test[,11]
-```
 
-## Introduction
-
-looking at our problem, we have 10 columns of numerical data. No domain knowledge has been provided on what the columns represent. We also have a outcome variable that is categorical, with 9 different categories. Again, no domain knowledge has been provided as to what the values mean. Given that we have very little information about our data, and that our number of predictors is significantly lower than our observations n, we decided that a tree based method, a SVM, a KNN, and a neural net were a good range of models to consider
-
-Regarding the data itself, since there was no missing values, no data imputation was necessary before statistical analysis began. Additionally, the only processing we did was to split our training data into a test and training dataset, additionally, we also ensured that our outcome column was correctly assigned as a factor, instead of a continous numerical vector.
-
-## Tree Based Methods 
-```{r tree}
 #bagging
 d_bag=randomForest(class~.,data=d , subset=train,mtry=10,importance =TRUE)
 d_bag
@@ -75,14 +79,14 @@ tmTree2<-tm+.000000001
 tmTree2
 ```
 
-We looked at several different types of tree based methods. Initially, we considered a plain CART, bagging, boosting, and random forest. For each of these methods, we proceeded to do hold-out testing on a subset of our training data, using classification error rate as our criteria. After tuning all of our tree based methods using this criteria, we then selected the best tree based method, which here, is bagging.
+We looked at several different types of tree-based methods. Initially, we considered a plain CART, bagging, boosting, and random forest. For each of these methods, we proceeded to do hold-out testing on a subset of the training data, using classification error rate as our criteria. After tuning all of our tree-based methods using this criteria, we selected the best tree-based method, which here was bagging.
 
 Looking at the graphs of accuracy and node purity that we produced from the bagging method, we found that v5, v1, and v2 seemed like they were roughly the most important variables for both accuracy and node purity.
 
 Looking at our table and graph of the outcomes, it is fairly clear that we had excellent classification ability, with a classification error of approximately 6 percent.
 
-## Support Vector Machines 
-```{r svm}
+## Support vector machines 
+```{r echo = FALSE, eval = FALSE}
 #Provided Code
 Xtrain = read.table("Data/Xtrain.txt")
 Ytrain = read.table("Data/Ytrain.txt", quote="\"", comment.char="")
@@ -92,7 +96,7 @@ training$Author = as.factor(training$Author)
 
 
 Yhot = one_hot(as.data.table(as.factor(Ytrain$V1)))
-Xtest = read.table("Downloads/Xtest.txt")
+Xtest = read.table("Data/Xtest.txt")
 
 
 
@@ -147,16 +151,200 @@ CEtrain4 = -sum(colSums(Yhot*log(probstrain4)))
 Ppred3 = predict(best.mod3, Xtest, probability = T)
 Ppred3 = attr(Ppred3, "probabilities")
 ```
-I initially thought of using a SVM as a classification model for this project for a couple of reasons. From what we learned in class, SVC and SVMs seem to be able to fit pretty complex data, and with us knowing really nothing about the data at all, I thought that it would be interesting to see if a more complex model would work best. Another reason I wanted to use the SVM modeling techniques was because of the usefulness in tuning the parameters. Becasue of how easy it is to tune the parameters, we were able to try and fit many different SVC and SVMs in R. 
 
-Using classification error rate as the criteria, we were able to come up with the best model in predicting the training set. Unfortunately, none of the models tested had a training error rate that was lower than 17 percent. SO, my next task was to use the cross entropy rates to tune the parameters. I used the models that were tuned based on mis-classification rates as approximations, and then plugged and chugged to find the best model cross entropy value. This best model was a polynomial kernel model with a cost of .0001 and a degree of 3. 
+We initially thought of using a SVM as a classification model for this project for a couple of reasons. From what we learned in class, SVC and SVMs seem to be able to fit pretty complex data, and with us knowing really nothing about the data at all, we thought that it would be interesting to see if a more complex model would work best. Another reason we wanted to use the SVM modeling techniques was because of the usefulness in tuning the parameters. Becasue of how easy it is to tune the parameters, we were able to try and fit many different SVC and SVMs. 
+
+Using classification error rate as the criteria, we were able to come up with the best model in predicting the training set. Unfortunately, none of the models tested had a training error rate that was lower than 17 percent. So, my next task was to use cross entropy to tune the parameters. I used the models that were tuned based on misclassification rates as approximations, and then plugged and chugged to find the best model in terms of cross entropy value. The best model was a polynomial kernel model with a cost of .0001 and degree of 3. 
 
 ## KNN
-```{r KNN}
+```{r echo = FALSE, eval = FALSE}
+library(caret)
+library(class)
+library(data.table)
+library(dplyr)
+library(mltools)
+
+# Read in the data
+x_train <- read.table("Data/Xtrain.txt")
+y_train <- read.table("Data/Ytrain.txt")
+y_train <- rename(y_train, author = V1)
+y_train$author <- as.factor(y_train$author)
+train <- cbind(x_train, y_train)
+x_test <- read.table("Data/Xtest.txt")
+y_hot <- one_hot(as.data.table(train$author))
+
+## KNN
+
+# Train the classifier and estimate the test error using 10-fold cross-validation
+train_control <- trainControl(method = "cv", number = 10)
+
+knn_accuracy = rep(NA, 15)
+for (i in 1:15) {
+  knn = caret::train(author ~., data = train, method = "knn", trControl = train_control, 
+                     preProcess = c("center", "scale"), tuneGrid = data.frame(k = i))
+  knn_accuracy[i] = as.numeric(knn$results[2])
+}
+
+# Calculate the training cross-entropy for range of k
+set.seed(2)
+knn_ce_train = rep(NA, 15)
+for (i in 1:15) {
+  knn = caret::train(author ~., data = train, method = "knn", preProcess = c("center", "scale"), 
+                     tuneGrid = data.frame(k = i))
+  knn_pred = predict(knn, newdata = train, type = "prob")
+  knn_pred = as.matrix(knn_pred)
+  knn_ce_train[i] = -sum(colSums(y_hot*log(knn_pred + 1e-15)))
+}
+
+# Train the classifier and estimate the "test CE" using 5-fold cross-validation (2694.341)
+K <- 5
+I <- 15
+set.seed(3)
+folds <- sample(1:K, nrow(train), replace = TRUE)
+knn_ce_test <- matrix(data = NA, nrow = K, ncol = I)
+
+for (k in 1:K) {
+  cv_train = train[folds != k, ]
+  cv_test = train[folds == k, ]
+  y_hot = one_hot(as.data.table(cv_test$author))
+  for (i in 1:15) {
+    knn = caret::train(author ~., data = cv_train, method = "knn", preProcess = c("center", "scale"), 
+                       tuneGrid = data.frame(k = i))
+    knn_pred = predict(knn, newdata = cv_test, type = "prob")
+    knn_pred = as.matrix(knn_pred)
+    knn_ce_test[k,i] = -sum(colSums(y_hot*log(knn_pred + 1e-15)))
+  }
+  knn_ce_cv <<- colMeans(knn_ce_test)
+}
+
+# Plot the number of neighbors vs. cross-validated CE
+k_ce <- data.frame(ce = knn_ce_cv)
+k_ce$k <- rownames(k_ce)
+k_ce$k <- as.numeric(k_ce$k)
+
+ggplot(data = k_ce, aes(x = k, y = ce, group = 1)) + geom_line() + xlab("K") + ylab("Cross-validated CE") + ggtitle("Number of neighbors vs. cross-validated CE") + theme_minimal()
+
+# Train the best classifier on the full training set
+knn <- caret::train(author ~., data = train, method = "knn", preProcess = c("center", "scale"),
+                    tuneGrid = data.frame(k = 15))
+
+# Report the confusion matrix and accuracy (0.6704)
+confusionMatrix(knn)
+
+# Calculate the training cross-entropy (6223.914)
+y_hot <- one_hot(as.data.table(train$author))
+knn_pred <- predict(knn, newdata = train, type = "prob")
+knn_pred <- as.matrix(knn_pred)
+knn_ce <- -sum(colSums(y_hot*log(knn_pred + 1e-15)))
+
+# Save the test prediction probabilities
+Ppred4 <- predict(knn, newdata = x_test, type = "prob")
+Ppred4 <- as.matrix(Ppred4)
+save(Ppred4, file = "Ppred4.RData")
 ```
 
+Before training the KNN classifier, the predictors in the training set were centered and scaled (using "preProcess" in caret). Five-fold cross-validated cross-entropy was used to determine the optimal value for K. In other words, the training data was split into five folds and the average cross-entropy was computed after the classifier was fit five times. This was performed for values of K ranging from 1 to 15. The five-fold cross-validated CE seemed to decrease with each increase in the number of neighbors, so 15 was chosen as the optimal value for K, with a cross-validated CE of 2,694.341. Larger values of K were not considered, as it was believed this could lead to a large decrease in variance at the cost of high bias and the cross-validated CE exhibited a clear negative trend. In addition, it was computationally difficult to compute the cross-validated CE for a large range of K, such as 1 to 50.
 
-## Neural Net
-```{r nnets}
+The (not cross-validated) training CE increased as K increased, and the 10-fold cross-validated accuracy decreased as K increased. This is likely due to small values of K leading to overfitting. The classifier with K = 15 had an accuracy of approximately 0.67 and a training cross-entropy of 6,223.914. A plot of the number of neighbors vs. cross-validated CE is below.
+
+![](/Users/davidreynolds/Downloads/Documents/GitHub/Data-III-Project-2/knn_plot.jpg)
+
+## Neural network
+```{r echo = FALSE, eval = FALSE}
+library(ANN2)
+library(caret)
+library(data.table)
+library(dplyr)
+library(mltools)
+
+# Read in the data
+x_train <- read.table("Data/Xtrain.txt")
+y_train <- read.table("Data/Ytrain.txt")
+y_train <- rename(y_train, author = V1)
+y_train$author <- as.factor(y_train$author)
+x_test <- read.table("Data/Xtest.txt")
+
+# Scale the predictors
+rescale <- function(x, x_min, x_max) {
+  r = (x - x_min)/(x_max - x_min) 
+  r[is.nan(r)] = 0
+  return(r)
+}
+
+x_min <- apply(x_train, 2, min)
+x_max <- apply(x_train, 2, max)
+x_train_scaled <- t(apply(x_train, 1, rescale, x_min, x_max))
+x_test_scaled <- t(apply(x_test, 1, rescale, x_min, x_max))
+train <- cbind(x_train_scaled, y_train)
+
+# Train the neural network and estimate the "test CE" using 5-fold cross-validation (1996.641)
+K <- 5
+set.seed(1)
+folds <- sample(1:K, nrow(train), replace = TRUE)
+nn_ce <- rep(NA, K)
+
+for (k in 1:K) {
+  cv_train = train[folds != k, ]
+  cv_test = train[folds == k, ]
+  x_cv_train = cv_train[, 1:10]
+  y_cv_train = cv_train[, 11]
+  x_cv_test = cv_test[, 1:10]
+  y_cv_test = cv_test[, 11]
+  y_hot = one_hot(as.data.table(y_cv_test))
+  set.seed(2)
+  nn = neuralnetwork(X = x_cv_train, y = y_cv_train, hidden.layers = c(9, 8, 7), optim.type = "adam",
+                     n.epochs = 10, activ.functions = "tanh", learn.rates = 0.05, 
+                     val.prop = 0.05, verbose = FALSE)
+  nn_pred = predict(nn, newdata = x_cv_test, probability = TRUE)
+  nn_probs = as.data.frame(nn_pred$probabilities)
+  nn_probs = nn_probs %>% 
+    select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
+           "9" = class_9, "11" = class_11, "12" = class_12)
+  nn_probs <- as.matrix(nn_probs)
+  nn_ce[k] <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
+}
+mean(nn_ce)
+
+# Train the best neural network on the full training set
+set.seed(3)
+nn <- neuralnetwork(X = x_train_scaled, y = y_train, hidden.layers = c(9, 8, 7), optim.type = "adam", 
+                    n.epochs = 10, activ.functions = "tanh", learn.rates = 0.05, val.prop = 0.05, 
+                    verbose = FALSE)
+
+# Plot the loss during training
+plot(nn)
+
+# Report the confusion matrix and accuracy (0.2272)
+nn_pred <- predict(nn, newdata = x_train_scaled)
+nn_table <- table(truth = y_train$author, fitted = nn_pred$predictions)
+sum(diag(nn_table))/length(y_train$author)
+
+# Calculate the training cross-entropy (10049.33)
+nn_pred <- predict(nn, newdata = x_train_scaled, probability = TRUE)
+nn_probs <- as.data.frame(nn_pred$probabilities)
+
+nn_probs <- nn_probs %>% 
+  select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
+         "9" = class_9, "11" = class_11, "12" = class_12)
+
+nn_probs <- as.matrix(nn_probs)
+y_hot = one_hot(as.data.table(y_train$author))
+nn_ce <- -sum(colSums(y_hot*log(nn_probs + 1e-15)))
+
+# Save the test prediction probabilities
+Ppred5 <- predict(nn, newdata = x_test_scaled, probability = TRUE)
+Ppred5 <- as.data.frame(Ppred5$probabilities)
+
+Ppred5 <- Ppred5 %>% 
+  select("1" = class_1, "4" = class_4, "5" = class_5, "6" = class_6, "7" = class_7, "8" = class_8,
+         "9" = class_9, "11" = class_11, "12" = class_12)
+
+Ppred5 <- as.matrix(Ppred5)
+save(Ppred5, file = "Ppred5.RData")
 ```
 
+Before training the neural network, the predictors in the training and test sets were scaled to be between 0 and 1. The parameters were tuned using five-fold cross-validated cross-entropy. In other words, the training data was split into five folds and the average cross-entropy was computed after the neural network was fit five times. This was performed for a range of parameter values.
+
+Note that it was difficult to automate the selection of parameter values in the loop (i.e., using a grid of different values), as RStudio often crashed when calculating the cross-validated cross-entropy alone. Because of this, different values for the number of epochs, learning rate, etc. were plugged into the loop and the cross-validated CEs were compared. Setting the number of hidden layers to three with nine, eight, and seven hidden variables, "optim.type" to "adam," "n.epochs" to 10, "activ.functions" to "tanh," the learning rate to 0.05, and the proportion of the training data used for tracing the loss on the validation set to 0.05 resulted in the lowest cross-validated CE, which was 1,996.641. This model had an accuracy of approximately 0.227 and a training cross-entropy of approximately 10,049.3. A plot of the loss during training is below.
+
+![](/Users/davidreynolds/Downloads/Documents/GitHub/Data-III-Project-2/nn_plot.jpg)
