@@ -83,9 +83,73 @@ Looking at our table and graph of the outcomes, it is fairly clear that we had e
 
 ## Support Vector Machines 
 ```{r svm}
+#Provided Code
+Xtrain = read.table("Data/Xtrain.txt")
+Ytrain = read.table("Data/Ytrain.txt", quote="\"", comment.char="")
+training = cbind(Ytrain, Xtrain)
+names(training)[1] = "Author"
+training$Author = as.factor(training$Author)
 
+
+Yhot = one_hot(as.data.table(as.factor(Ytrain$V1)))
+Xtest = read.table("Downloads/Xtest.txt")
+
+
+
+#I commented out the parts that take super super super super long to go through.
+set.seed(1)
+
+#tune.out1 = tune(svm, Author ~., data = training, kernel = "linear",
+#                 ranges = list(cost = c(0.01, 0.1, 1, 10, 100)))
+#tune.out2 = tune(svm, Author ~., data = training, kernel = "radial", 
+#                 ranges = list(cost = c(.01, 1, 10, 100),
+#                               gamma = c(.01, 1, 10, 100)))
+#tune.out3 = tune(svm, Author ~., data = training, kernel = "polynomial",
+#                 ranges = list(cost = c(.01, 1, 10, 100),
+#                               degree = c(2, 3, 4)))
+#tune.out4 = tune(svm, Author ~., data = training, kernel = "sigmoid", 
+#                 ranges = list(cost = c(0.1, 1, 10, 100),
+#                               gamma = c(0.1, 1, 10, 100)))
+
+
+
+#summary(tune.out1)
+best.mod1 = svm(Author ~., data = training, kernel = "linear",
+                cost = 100, probability = T)
+ypred1 = predict(best.mod1, Xtrain, probability = T)
+probstrain1 = attr(ypred1, "probabilities")
+
+CEtrain1 = -sum(colSums(Yhot*log(probstrain1)))
+
+#summary(tune.out2)
+best.mod2 = svm(Author ~ ., data = training, kernel = "radial",
+                cost = .00001, gamma = .00001, probability = T)
+
+ypred2 = predict(best.mod2, Xtrain, probability = T)
+probstrain2 = attr(ypred2, "probabilities")
+CEtrain2 = -sum(colSums(Yhot*log(probstrain2)))
+
+#summary(tune.out3)
+best.mod3 = svm(Author ~ ., data = training, kernel = "polynomial",
+                cost = .0001, degree = 3, probability = T)
+ypred3 = predict(best.mod3, Xtrain, probability = T)
+probstrain3 = attr(ypred3, "probabilities")
+CEtrain3 = -sum(colSums(Yhot*log(probstrain3)))
+
+
+#summary(tune.out4)
+best.mod4 = svm(Author ~., data = training, kernel = "sigmoid",
+                cost = 1, gamma = 1, probability = T)
+ypred4 = predict(best.mod4, Xtrain, probability = T)
+probstrain4 = attr(ypred4, "probabilities")
+CEtrain4 = -sum(colSums(Yhot*log(probstrain4)))
+
+Ppred3 = predict(best.mod3, Xtest, probability = T)
+Ppred3 = attr(Ppred3, "probabilities")
 ```
+I initially thought of using a SVM as a classification model for this project for a couple of reasons. From what we learned in class, SVC and SVMs seem to be able to fit pretty complex data, and with us knowing really nothing about the data at all, I thought that it would be interesting to see if a more complex model would work best. Another reason I wanted to use the SVM modeling techniques was because of the usefulness in tuning the parameters. Becasue of how easy it is to tune the parameters, we were able to try and fit many different SVC and SVMs in R. 
 
+Using classification error rate as the criteria, we were able to come up with the best model in predicting the training set. Unfortunately, none of the models tested had a training error rate that was lower than 17 percent. SO, my next task was to use the cross entropy rates to tune the parameters. I used the models that were tuned based on mis-classification rates as approximations, and then plugged and chugged to find the best model cross entropy value. This best model was a polynomial kernel model with a cost of .0001 and a degree of 3. 
 
 ## KNN
 ```{r KNN}
