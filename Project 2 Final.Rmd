@@ -46,7 +46,7 @@ e1071::skewness(x_train$V10)
 Variables 6 and 10 appeared to be highly correlated with one another, but we decided not to remove them, as there are only 10 predictors. Variables 1, 2, 5, and 7 are highly skewed, which may pose a challenge. The fact that there are no categorical predictors should help. Overall, we did not feel that any modifications needed to be made to the data before modeling.
 
 ## Tree-based methods 
-```{r echo = FALSE, eval = FALSE}
+```{r include=FALSE}
 library(tidyverse)
 library(tree)
 library(ISLR)
@@ -106,6 +106,16 @@ tm2 <- predict(d_bag, xtest, "prob")
 tmTree2<-tm+.000000001
 tmTree2
 ```
+
+```{r echo=FALSE}
+plot(yhat.bag , class_test)
+#importance of variables
+importance(d_bag)
+varImpPlot(d_bag)
+
+```
+
+We initially considered tree based methods because if we look at large trees using tree aggregation methods (bagging, boosting, random forest, etc.) we should be well insulated against the effects of overfitting. Especially given that we have no context regarding what the specific application of this data is, making sure that we don't overfit is especially important. Additionally, the value we can obtain from plots of variable importance and node purity importance will allow us to make additional inferences on the dataset.
 
 We looked at several different types of tree-based methods. Initially, we considered a plain CART, bagging, boosting, and random forest. For each of these methods, we proceeded to do hold-out testing on a subset of the training data, using classification error rate as our criteria. After tuning all of our tree-based methods using this criteria, we selected the best tree-based method, which here was bagging.
 
@@ -277,7 +287,7 @@ Before training the KNN classifier, the predictors in the training set were cent
 
 The (not cross-validated) training CE increased as K increased, and the 10-fold cross-validated accuracy decreased as K increased. This is likely due to small values of K leading to overfitting. The classifier with K = 15 had an accuracy of approximately 0.67 and a training cross-entropy of 6,223.914. A plot of the number of neighbors vs. cross-validated CE is below.
 
-![](/Users/davidreynolds/Downloads/Documents/GitHub/Data-III-Project-2/knn_plot.jpg)
+![](knn_plot.jpg)
 
 ## Neural network
 ```{r echo = FALSE, eval = FALSE}
@@ -379,6 +389,6 @@ Before training the neural network, the predictors in the training and test sets
 
 Note that it was difficult to automate the selection of parameter values in the loop (i.e., using a grid of different values), as RStudio often crashed when calculating the cross-validated cross-entropy alone. Because of this, different values for the number of epochs, learning rate, etc. were plugged into the loop and the cross-validated CEs were compared. Setting the number of hidden layers to three with nine, eight, and seven hidden variables, "optim.type" to "adam," "n.epochs" to 10, "activ.functions" to "tanh," the learning rate to 0.05, and the proportion of the training data used for tracing the loss on the validation set to 0.05 resulted in the lowest cross-validated CE, which was 1,996.641. This model had an accuracy of approximately 0.227 and a training cross-entropy of approximately 10,049.3. A plot of the loss during training is below.
 
-![](/Users/davidreynolds/Downloads/Documents/GitHub/Data-III-Project-2/nn_plot.jpg)
+![](nn_plot.jpg)
 
 Ppred1.RData is the prediction matrix for bagging, Ppred2.RData is the matrix for SVM, Pred3.RData is the matrix for KNN, and Ppred4.RData is the matrix for the neural network. All four methods performed fairly well on the training set, but it is of course difficult to evaluate performance without test labels. Cross-validated cross-entropy was used to train the KNN classifier and neural network, which may be the best method available to evaluate model performance for this particular problem. In the future, it would probably be useful to find better ways to tune parameters while maintaining computational speed. It can be difficult to train some of these models, especially neural networks, with low computing power.
